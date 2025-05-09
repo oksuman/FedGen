@@ -4,25 +4,31 @@ from utils.model_utils import read_data, read_user_data
 # Implementation for FedProx Server
 
 class FedProx(Server):
-    def __init__(self, args, model, seed):
-        #dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
-        #         local_epochs, num_users, K, personal_learning_rate, times):
-        super().__init__(args, model, seed)#dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
-                         #local_epochs, num_users, times)
+    def __init__(self, args, model, seed, user_loaders=None):
+        super().__init__(args, model, seed)
 
-        # Initialize data for all  users
-        data = read_data(args.dataset)
-        total_users = len(data[0])
-        print("Users in total: {}".format(total_users))
+        if user_loaders is not None:
+            print("Using externally provided user loaders.")
+            self.users = []
+            for i, loader in enumerate(user_loaders):
+                from FLAlgorithms.users.userFedProx import UserFedProx
+                user = UserFedProx(args, i, model, loader, loader, use_adam=False)
+                self.users.append(user)
+                self.total_train_samples += user.train_samples
+        else:
+            data = read_data(args.dataset)
+            total_users = len(data[0])
+            print("Users in total: {}".format(total_users))
 
-        for i in range(total_users):
-            id, train_data , test_data = read_user_data(i, data, dataset=args.dataset)
-            user = UserFedProx(args, id, model, train_data, test_data, use_adam=False)
-            self.users.append(user)
-            self.total_train_samples += user.train_samples
-            
-        print("Number of users / total users:", self.num_users, " / " ,total_users)
-        print("Finished creating FedAvg server.")
+            for i in range(total_users):
+                id, train_data , test_data = read_user_data(i, data, dataset=args.dataset)
+                user = UserFedProx(args, id, model, train_data, test_data, use_adam=False)
+                self.users.append(user)
+                self.total_train_samples += user.train_samples
+
+        print("Number of users / total users:", self.num_users, " / " ,len(self.users))
+        print("Finished creating FedProx server.")
+
 
     def train(self, args):
         for glob_iter in range(self.num_glob_iters):

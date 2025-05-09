@@ -6,22 +6,30 @@ import numpy as np
 import time
 
 class FedAvg(Server):
-    def __init__(self, args, model, seed):
+    def __init__(self, args, model, seed, user_loaders=None):
         super().__init__(args, model, seed)
 
-        # Initialize data for all  users
-        data = read_data(args.dataset)
-        total_users = len(data[0])
-        self.use_adam = 'adam' in self.algorithm.lower()
-        print("Users in total: {}".format(total_users))
+        if user_loaders is not None:
+            print("Using externally provided user loaders.")
+            self.users = []
+            for i, loader in enumerate(user_loaders):
+                from FLAlgorithms.users.useravg import UserAVG
+                user = UserAVG(args, i, model, loader, loader, use_adam=False)
+                self.users.append(user)
+                self.total_train_samples += user.train_samples
+        else:
+            data = read_data(args.dataset)
+            total_users = len(data[0])
+            self.use_adam = 'adam' in self.algorithm.lower()
+            print("Users in total: {}".format(total_users))
 
-        for i in range(total_users):
-            id, train_data , test_data = read_user_data(i, data, dataset=args.dataset)
-            user = UserAVG(args, id, model, train_data, test_data, use_adam=False)
-            self.users.append(user)
-            self.total_train_samples += user.train_samples
-            
-        print("Number of users / total users:",args.num_users, " / " ,total_users)
+            for i in range(total_users):
+                id, train_data , test_data = read_user_data(i, data, dataset=args.dataset)
+                user = UserAVG(args, id, model, train_data, test_data, use_adam=False)
+                self.users.append(user)
+                self.total_train_samples += user.train_samples
+
+        print("Number of users / total users:", args.num_users, " / ", len(self.users))
         print("Finished creating FedAvg server.")
 
     def train(self, args):
