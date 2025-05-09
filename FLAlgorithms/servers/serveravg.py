@@ -6,15 +6,15 @@ import numpy as np
 import time
 
 class FedAvg(Server):
-    def __init__(self, args, model, seed, user_loaders=None):
+    def __init__(self, args, model, seed, user_datasets=None):
         super().__init__(args, model, seed)
 
-        if user_loaders is not None:
-            print("Using externally provided user loaders.")
+        if user_datasets is not None:
+            print("Using externally provided user datasets.")
+            from FLAlgorithms.users.useravg import UserAVG
             self.users = []
-            for i, loader in enumerate(user_loaders):
-                from FLAlgorithms.users.useravg import UserAVG
-                user = UserAVG(args, i, model, loader, loader, use_adam=False)
+            for i, data in enumerate(user_datasets):
+                user = UserAVG(args, i, model, data, data, use_adam=False)
                 self.users.append(user)
                 self.total_train_samples += user.train_samples
         else:
@@ -32,9 +32,10 @@ class FedAvg(Server):
         print("Number of users / total users:", args.num_users, " / ", len(self.users))
         print("Finished creating FedAvg server.")
 
+
     def train(self, args):
         for glob_iter in range(self.num_glob_iters):
-            print("\n\n-------------Round number: ",glob_iter, " -------------\n\n")
+            # print("\n\n-------------Round number: ",glob_iter, " -------------\n")
             self.selected_users = self.select_users(glob_iter,self.num_users)
             self.send_parameters(mode=self.mode)
             self.evaluate()

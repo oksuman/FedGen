@@ -128,7 +128,7 @@ class Server:
             list of selected clients objects
         '''
         if(num_users == len(self.users)):
-            print("All users are selected")
+            # print("All users are selected")
             return self.users
 
         num_users = min(num_users, len(self.users))
@@ -228,5 +228,5 @@ class Server:
         if save:
             self.metrics['glob_acc'].append(glob_acc)
             self.metrics['glob_loss'].append(glob_loss)
-        print("Average Global Accurancy = {:.4f}, Loss = {:.2f}.".format(glob_acc, glob_loss))
+        # print("Average Global Accurancy = {:.4f}, Loss = {:.2f}.".format(glob_acc, glob_loss))
 

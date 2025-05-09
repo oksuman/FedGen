@@ -46,6 +46,7 @@ class User:
         self.personalized_model_bar = copy.deepcopy(list(self.model.parameters()))
         self.prior_decoder = None
         self.prior_params = None
+        self.device = args.device
 
         self.init_loss_fn()
         if use_adam:
@@ -62,10 +63,11 @@ class User:
 
 
     def init_loss_fn(self):
-        self.loss=nn.NLLLoss()
+        self.loss = nn.CrossEntropyLoss()
         self.dist_loss = nn.MSELoss()
-        self.ensemble_loss=nn.KLDivLoss(reduction="batchmean")
+        self.ensemble_loss = nn.KLDivLoss(reduction="batchmean")
         self.ce_loss = nn.CrossEntropyLoss()
+
 
     def set_parameters(self, model,beta=1):
         for old_param, new_param, local_param in zip(self.model.parameters(), model.parameters(), self.local_model):
@@ -134,7 +136,9 @@ class User:
         test_acc = 0
         loss = 0
         for x, y in self.testloaderfull:
-            output = self.model(x)['output']
+            x, y = x.to(self.device), y.to(self.device)
+            x = x.view(x.size(0), -1)
+            output = self.model(x)
             loss += self.loss(output, y)
             test_acc += (torch.sum(torch.argmax(output, dim=1) == y)).item()
         return test_acc, loss, y.shape[0]
@@ -147,14 +151,15 @@ class User:
         loss = 0
         self.update_parameters(self.personalized_model_bar)
         for x, y in self.testloaderfull:
-            output = self.model(x)['output']
+            x, y = x.to(self.device), y.to(self.device)
+            x = x.view(x.size(0), -1)
+            output = self.model(x)
             loss += self.loss(output, y)
             test_acc += (torch.sum(torch.argmax(output, dim=1) == y)).item()
-            #@loss += self.loss(output, y)
-            #print(self.id + ", Test Accuracy:", test_acc / y.shape[0] )
-            #print(self.id + ", Test Loss:", loss)
         self.update_parameters(self.local_model)
         return test_acc, y.shape[0], loss
+
+
 
 
     def get_next_train_batch(self, count_labels=True):
