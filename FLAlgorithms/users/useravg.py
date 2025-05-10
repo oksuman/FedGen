@@ -34,7 +34,9 @@ class UserAVG(User):
 
                 self.optimizer.zero_grad()
                 X, y = X.to(self.device), y.to(self.device)
-                X = X.view(X.size(0), -1)
+                if not getattr(self.model, "is_cnn_input", False):
+                    X = X.view(X.size(0), -1)
+
                 output = self.model(X)
                 loss = self.loss(output, y)
                 loss.backward()

@@ -137,7 +137,10 @@ class User:
         loss = 0
         for x, y in self.testloaderfull:
             x, y = x.to(self.device), y.to(self.device)
-            x = x.view(x.size(0), -1)
+
+            if not getattr(self.model, "is_cnn_input", False):
+                x = x.view(x.size(0), -1)  # only flatten if not CNN
+
             output = self.model(x)
             loss += self.loss(output, y)
             test_acc += (torch.sum(torch.argmax(output, dim=1) == y)).item()
@@ -152,14 +155,13 @@ class User:
         self.update_parameters(self.personalized_model_bar)
         for x, y in self.testloaderfull:
             x, y = x.to(self.device), y.to(self.device)
-            x = x.view(x.size(0), -1)
+            if not getattr(self.model, "is_cnn_input", False):
+                x = x.view(x.size(0), -1)
             output = self.model(x)
             loss += self.loss(output, y)
             test_acc += (torch.sum(torch.argmax(output, dim=1) == y)).item()
         self.update_parameters(self.local_model)
         return test_acc, y.shape[0], loss
-
-
 
 
     def get_next_train_batch(self, count_labels=True):

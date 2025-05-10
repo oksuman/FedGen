@@ -34,7 +34,9 @@ class UserFedProx(User):
                 result = self.get_next_train_batch(count_labels=count_labels)
                 X, y = result['X'], result['y']
                 X, y = X.to(self.device), y.to(self.device)
-                X = X.view(X.size(0), -1)
+                if not getattr(self.model, "is_cnn_input", False):
+                    X = X.view(X.size(0), -1)
+
 
                 if count_labels:
                     self.update_label_counts(result['labels'], result['counts'])

@@ -228,5 +228,5 @@ class Server:
         if save:
             self.metrics['glob_acc'].append(glob_acc)
             self.metrics['glob_loss'].append(glob_loss)
-        # print("Average Global Accurancy = {:.4f}, Loss = {:.2f}.".format(glob_acc, glob_loss))
+        print("Average Global Accurancy = {:.4f}, Loss = {:.2f}.".format(glob_acc, glob_loss))
 

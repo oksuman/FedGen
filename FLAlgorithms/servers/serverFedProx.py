@@ -28,7 +28,7 @@ class FedProx(Server):
 
     def train(self, args):
         for glob_iter in range(self.num_glob_iters):
-            print("\n\n-------------Round number: ", glob_iter, " -------------\n\n")
+            # print("\n\n-------------Round number: ", glob_iter, " -------------\n\n")
             self.selected_users = self.select_users(glob_iter, self.num_users)
             self.send_parameters()
             self.evaluate()
