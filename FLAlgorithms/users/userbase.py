@@ -47,7 +47,10 @@ class User:
         self.prior_decoder = None
         self.prior_params = None
         self.device = args.device
-
+      
+        self.model.to(self.device)
+  
+ 
         self.init_loss_fn()
         if use_adam:
             self.optimizer=torch.optim.Adam(
@@ -69,14 +72,24 @@ class User:
         self.ce_loss = nn.CrossEntropyLoss()
 
 
-    def set_parameters(self, model,beta=1):
+    # def set_parameters(self, model,beta=1):
+    #     for old_param, new_param, local_param in zip(self.model.parameters(), model.parameters(), self.local_model):
+    #         if beta == 1:
+    #             old_param.data = new_param.data.clone()
+    #             local_param.data = new_param.data.clone()
+    #         else:
+    #             old_param.data = beta * new_param.data.clone() + (1 - beta)  * old_param.data.clone()
+    #             local_param.data = beta * new_param.data.clone() + (1-beta) * local_param.data.clone()
+    def set_parameters(self, model, beta=1):
         for old_param, new_param, local_param in zip(self.model.parameters(), model.parameters(), self.local_model):
             if beta == 1:
-                old_param.data = new_param.data.clone()
-                local_param.data = new_param.data.clone()
+                old_param.data = new_param.data.clone().to(self.device)
+                local_param.data = new_param.data.clone().to(self.device)
             else:
-                old_param.data = beta * new_param.data.clone() + (1 - beta)  * old_param.data.clone()
-                local_param.data = beta * new_param.data.clone() + (1-beta) * local_param.data.clone()
+                updated_data = (beta * new_param.data + (1 - beta) * old_param.data).clone().to(self.device)
+                old_param.data = updated_data
+                local_param.data = updated_data.clone()
+
 
     def set_prior_decoder(self, model, beta=1):
         for new_param, local_param in zip(model.personal_layers, self.prior_decoder):
@@ -136,10 +149,10 @@ class User:
         test_acc = 0
         loss = 0
         for x, y in self.testloaderfull:
-            x, y = x.to(self.device), y.to(self.device)
-
             if not getattr(self.model, "is_cnn_input", False):
                 x = x.view(x.size(0), -1)  # only flatten if not CNN
+
+            x, y = x.to(self.device), y.to(self.device)
 
             output = self.model(x)
             loss += self.loss(output, y)
