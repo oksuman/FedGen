@@ -17,7 +17,7 @@ class UserFedProx(User):
         del self.label_counts
         self.label_counts = {int(label):1 for label in range(self.unique_labels)}
 
-    def train(self, glob_iter, lr_decay=True, count_labels=False):
+    def train(self, glob_iter, personalized=None, lr_decay=True, count_labels=False):
         if hasattr(self, "train_data_logged") is False:
             label_list = []
             for x, y in self.trainloaderfull:
